@@ -36,7 +36,8 @@
 import java.awt.Color;
 
 class ColorfulGame extends javax.swing.JPanel 
-implements java.awt.event.KeyListener
+implements java.awt.event.KeyListener,
+java.awt.event.ActionListener
 {
   int[][] occupied = new int[10][20];
  
@@ -75,6 +76,8 @@ implements java.awt.event.KeyListener
          Color.MAGENTA, // token type 7 => MAGENTA
     };
  
+  java.awt.image.BufferedImage image;
+
   int score=0;  // score
   int lineCompleted = 0;   // number of lines completed
   int level=0;
@@ -95,6 +98,49 @@ implements java.awt.event.KeyListener
     levelLabel.setBounds(300,100,100,30);
     this.add(levelLabel);
  
+    image = new java.awt.image.BufferedImage(24*10,24*20,
+      java.awt.image.BufferedImage.TYPE_INT_ARGB);
+
+    javax.swing.Timer timer=new javax.swing.Timer(30,this);
+    timer.start();
+  }
+
+  @Override //ActionListener
+  public void actionPerformed(java.awt.event.ActionEvent e)
+  {
+    // handle timer event only
+    if (e.getSource() instanceof javax.swing.Timer)
+    {
+      refreshPanel();
+    }
+  }
+
+  void redrawImage()
+  {
+    if (image==null) return;
+    java.awt.Graphics gr=image.getGraphics();
+    for (int x=0;x<occupied.length;x++)
+      for (int y=0;y<occupied[0].length;y++)
+       {
+          int colorCode=occupied[x][y];
+          // draw black border
+          gr.setColor(java.awt.Color.BLACK);
+          gr.fillRect(x*24,y*24,24,24);
+          // draw cell
+          gr.setColor(colorTable[colorCode]);
+          gr.fillRect(x*24+1,y*24+1,22,22);
+        }
+  }
+
+  void refreshPanel()
+  {
+    // draw to off screen buffer
+    redrawImage();
+
+    // draw to screen
+    java.awt.Graphics gr=this.getGraphics();
+    if (gr==null) return;
+    gr.drawImage(image,0,0,this);
   }
  
   public void drawCell(int x,int y,int colorCode)
@@ -123,21 +169,12 @@ implements java.awt.event.KeyListener
     }
   }
  
+  @Override // JPanel
   public void paint(java.awt.Graphics gr)
   {
     super.paint(gr);
+    if (image!=null) gr.drawImage(image,0,0,this);
  
-    for (int x=0;x<occupied.length;x++)
-      for (int y=0;y<occupied[0].length;y++)
-       {
-          int colorCode=occupied[x][y];
-          // draw black border
-          gr.setColor(java.awt.Color.BLACK);
-          gr.fillRect(x*24,y*24,24,24);
-          // draw cell
-          gr.setColor(colorTable[colorCode]);
-          gr.fillRect(x*24+1,y*24+1,22,22);
-        }
   }
  
   public boolean isValidPosition(int x,int y, int tokenNumber, int rotationNumber)
